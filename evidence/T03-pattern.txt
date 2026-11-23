@@ -1,0 +1,21 @@
+### T03 pattern decision evidence
+
+[1] new constructor/toString/__proto__ test against the ORIGINAL (baseline) expense.js:
+ Test Files  1 passed (1)
+      Tests  12 passed (12)
+
+[2] same test against my FIRST DRAFT (lookup with ??):
+28:  return BUDGET_LIMITS[category] ?? DEFAULT_LIMIT
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/acceptance.test.js > AC3 – unusual category names use the default limit > constructor / toString / __proto__ are treated as unknown categories
+AssertionError: expected 'ok' to be 'over' // Object.is equality
+ Test Files  1 failed (1)
+      Tests  1 failed | 11 passed (12)
+
+[3] FINAL refactored expense.js, all tests:
+ Test Files  2 passed (2)
+      Tests  18 passed (18)
+
+[4] structure before/after (git show HEAD vs working tree), src/expense.js:
+before: lines=47 if/else-if keywords in budget code=7 hard-coded limit literals (300|120|80|200)=8
+after: lines=40 if/else-if keywords in budget code=0 hard-coded limit literals (300|120|80|200)=4

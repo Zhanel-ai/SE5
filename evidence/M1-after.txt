@@ -1,0 +1,13 @@
+### M1 AFTER the fix: all tests (validation tests for M2 held back until M2)
+ ✓ tests/split.test.js (10 tests) 4ms
+ ✓ tests/expense.test.js (6 tests) 4ms
+ ✓ tests/acceptance.test.js (12 tests) 65ms
+ Test Files  3 passed (3)
+      Tests  28 passed (28)
+
+$ node src/cli.js data/sample.json 3
+Split between 3: 74.19, 74.18, 74.18
+$ node src/cli.js data/sample.json 0   (until M2: raw exception expected)
+  if (!Number.isInteger(people) || people < 1) throw new RangeError('people must be a positive integer')
+RangeError: people must be a positive integer
+exit=1

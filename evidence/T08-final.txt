@@ -1,0 +1,52 @@
+### FINAL checks at commit 1a6b942 on 2026-11-22
+
+$ git log --oneline
+1a6b942 docs: finalize AGENTS.md (permissions, review gates) and README (input, exit codes)
+f7cbbcb fix(R2): validate input (validateExpenses), friendly CLI errors with exit code 2
+883006f fix(R1): splitEvenly works in integer cents, keeps every cent, rejects invalid people counts
+869c44b refactor: replace duplicated category conditionals with one limits table (budgetLimit/budgetStatus)
+0c66718 test: add acceptance tests AC1-AC5 (pass on baseline code)
+931d719 docs: add AGENTS.md (purpose, architecture, safe/forbidden actions, AC1-AC5)
+c897a09 baseline: expense-calc prototype (no AGENTS.md, no lint)
+
+$ npm test
+> expense-calc@1.0.0 test
+> vitest run
+ ✓ tests/expense.test.js (6 tests) 6ms
+ ✓ tests/split.test.js (10 tests) 6ms
+ ✓ tests/acceptance.test.js (12 tests) 79ms
+ ✓ tests/validation.test.js (20 tests) 440ms
+ Test Files  4 passed (4)
+      Tests  48 passed (48)
+
+$ npm start
+Total: 222.55
+food: 139.25 (limit 300, ok)
+transport: 45.00 (limit 120, ok)
+fun: 25.90 (limit 80, ok)
+office: 12.40 (limit 200, ok)
+Split between 1: 222.55
+
+$ node src/cli.js data/sample.json 3
+Total: 222.55
+food: 139.25 (limit 300, ok)
+transport: 45.00 (limit 120, ok)
+fun: 25.90 (limit 80, ok)
+office: 12.40 (limit 200, ok)
+Split between 3: 74.19, 74.18, 74.18
+
+$ npm audit (summary)
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+$ line counts (src)
+  26 src/cli.js
+  59 src/expense.js
+  85 total
+
+$ test counts per file
+     12  ✓ tests/acceptance.test.js
+      6  ✓ tests/expense.test.js
+     10  ✓ tests/split.test.js
+     20  ✓ tests/validation.test.js

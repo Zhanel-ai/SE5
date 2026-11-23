@@ -1,0 +1,22 @@
+### Challenge probes (read-only)
+R2 raw food sum of 100.1+100.1+99.8                                    => 300
+R2 status for that raw sum (limit 300)                                 => ok
+R2 printed per-category (toFixed2) sum vs total, 3 x 0.005             => 0.01+0.01+0.01 vs total 0.02
+R10 Math.round(1.005*100)/100 (what total(1.005) gives)                => 1
+R2 total of 1.15 + 1.15 + 1.15 in cents-free floats                    => 3.45
+
+$ run the test suite from a DIFFERENT working directory (R6 claim: AC5 test uses cwd-relative paths)
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/acceptance.test.js > AC5 – CLI report > prints Total, one line per category and a Split line, exit code 0
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 17 passed (18)
+
+$ git branch --show-current; ls .git/hooks (non-sample files)
+main
+0
+
+$ grep -rn addExpense in src tests
+src/expense.js:3:export function addExpense(list, expense) {
+
+$ grep -c engines repo/package.json
+0

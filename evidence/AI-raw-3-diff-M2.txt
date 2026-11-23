@@ -1,0 +1,79 @@
+RAW OUTPUT OF THE AI ASSISTANT (read-only subagent) – proposed diff for mitigation M2 (risk R2). Unedited; the assistant did not run tests.
+The human reviewer accepted the diff unchanged and recorded the whitespace-category limitation as a residual risk (see report Section 8).
+
+Nothing was modified and no tests were run. I wrote the diff by hand from the files as read, and `git apply` has not been tried on it.
+
+(1) Diff
+
+--- a/src/expense.js
++++ b/src/expense.js
+@@ -1,5 +1,22 @@
+ // Expense calculator – core logic (baseline prototype).
+
++export function validateExpenses(list) {
++  if (!Array.isArray(list)) throw new TypeError('expenses must be a list')
++  for (let i = 0; i < list.length; i++) {
++    const e = list[i]
++    const n = i + 1
++    if (e === null || typeof e !== 'object') throw new TypeError('item ' + n + ': must be an object')
++    if (typeof e.category !== 'string' || e.category === '') {
++      throw new TypeError('item ' + n + ': category must be a non-empty string')
++    }
++    if (typeof e.amount !== 'number' || !Number.isFinite(e.amount) || e.amount < 0) {
++      throw new TypeError('item ' + n + ': amount must be a finite number >= 0')
++    }
++  }
++  return list
++}
++
+ export function addExpense(list, expense) {
+   list.push(expense)
+   return list
+--- a/src/cli.js
++++ b/src/cli.js
+@@ -1,15 +1,28 @@
+ import { readFileSync } from 'node:fs'
+-import { total, categoryTotals, budgetStatus, budgetLimit, splitEvenly } from './expense.js'
++import { total, categoryTotals, budgetStatus, budgetLimit, splitEvenly, validateExpenses } from './expense.js'
+
+ const file = process.argv[2]
+-const people = Number(process.argv[3] || 1)
+
+-const expenses = JSON.parse(readFileSync(file, 'utf8'))
+-const sum = total(expenses)
++if (!file) {
++  console.error('Usage: node src/cli.js <expenses.json> [people]')
++  process.exit(2)
++}
+
+-console.log('Total: ' + sum.toFixed(2))
+-const cats = categoryTotals(expenses)
+-for (const c of Object.keys(cats)) {
+-  console.log(c + ': ' + cats[c].toFixed(2) + ' (limit ' + budgetLimit(c) + ', ' + budgetStatus(c, cats[c]) + ')')
++try {
++  const people = Number(process.argv[3] || 1)
++  const expenses = validateExpenses(JSON.parse(readFileSync(file, 'utf8')))
++  const sum = total(expenses)
++  const cats = categoryTotals(expenses)
++  const shares = splitEvenly(sum, people)
++
++  console.log('Total: ' + sum.toFixed(2))
++  for (const c of Object.keys(cats)) {
++    console.log(c + ': ' + cats[c].toFixed(2) + ' (limit ' + budgetLimit(c) + ', ' + budgetStatus(c, cats[c]) + ')')
++  }
++  console.log('Split between ' + people + ': ' + shares.join(', '))
++} catch (err) {
++  console.error('Error: ' + (err && err.message ? err.message : String(err)))
++  process.exit(2)
+ }
+-console.log('Split between ' + people + ': ' + splitEvenly(sum, people).join(', '))
+
+(2) Why it is correct: `validateExpenses` throws a `TypeError` for every case in `tests/validation.test.js`. Each message starts with "expenses must be a list" or "item N: ", where N is 1-based. `cli.js` now handles the missing argument with the usage line and exit 2. It also validates the parsed JSON and computes the split before printing anything. So a bad file, bad JSON, a missing file or an invalid people count (`splitEvenly` throws `RangeError` for NaN, 0 and 2.5) goes to the catch block. That prints one `Error: <message>` line to stderr and exits 2, with no partial stdout and no stack trace. The success output uses the same strings in the same order, so it should be byte-identical.
+
+(3) Risks and assumptions:
+- Unspecified message: I added "item N: must be an object" for null or non-object items. The test only requires the `item N: ` prefix.
+- Whitespace categories: A category of only whitespace (for example " ") passes validation, because the spec says "non-empty string".
+- Spec-compliant but odd inputs: An amount of 0 is accepted (>= 0). A people argument of "" falls back to 1 (existing `|| 1` behaviour), and "1e1" is accepted as 10.
+- Error text: An ENOENT message includes the file path and system text on one line. Messages from non-Error throws are stringified.
+- Exit paths: `process.exit(2)` is called right after `console.error`. Stderr is normally flushed for pipes and files, but I haven't run it to confirm.
+- Out of scope: Category names like "constructor" or "__proto__" still behave oddly in `categoryTotals`. I left that alone under the no-unrelated-changes rule.

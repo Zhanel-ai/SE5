@@ -1,0 +1,5 @@
+### Acceptance/characterization tests on the UNCHANGED baseline code (commit 931d719)
+ ✓ tests/expense.test.js (6 tests) 4ms
+ ✓ tests/acceptance.test.js (11 tests) 71ms
+ Test Files  2 passed (2)
+      Tests  17 passed (17)

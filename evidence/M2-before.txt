@@ -1,0 +1,5 @@
+### M2 BEFORE the fix (commit 883006f): validation tests vs current code (tests strengthened: function must exist, message must be clear)
+⎯⎯⎯⎯⎯⎯ Failed Tests 19 ⎯⎯⎯⎯⎯⎯⎯
+ Test Files  1 failed | 3 passed (4)
+      Tests  19 failed | 29 passed (48)
+19

@@ -1,0 +1,72 @@
+### T01 commands (baseline commit c897a09) on 2026-11-22
+
+$ git ls-files
+.gitignore
+README.md
+data/sample.json
+package-lock.json
+package.json
+src/cli.js
+src/expense.js
+tests/expense.test.js
+
+$ node -v / npm -v
+v24.13.1
+11.8.0
+
+$ npm test
+> expense-calc@1.0.0 test
+> vitest run
+ RUN  v2.1.9 <repo>
+ ✓ tests/expense.test.js (6 tests) 3ms
+ Test Files  1 passed (1)
+      Tests  6 passed (6)
+
+$ npm start
+> node src/cli.js data/sample.json
+
+Total: 222.55
+food: 139.25 (limit 300, ok)
+transport: 45.00 (limit 120, ok)
+fun: 25.90 (limit 80, ok)
+office: 12.40 (limit 200, ok)
+Split between 1: 222.55
+
+$ node src/cli.js data/sample.json 3
+Total: 222.55
+food: 139.25 (limit 300, ok)
+transport: 45.00 (limit 120, ok)
+fun: 25.90 (limit 80, ok)
+office: 12.40 (limit 200, ok)
+Split between 3: 74.18, 74.18, 74.18
+
+$ node src/cli.js missing.json   (exit code follows)
+node:fs:439
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open '<repo>\missing.json'
+    at readFileSync (node:fs:439:20)
+exit=1
+
+$ npm run build / lint / typecheck
+npm error Missing script: "build"
+npm error
+npm error To see a list of scripts, run:
+npm error Missing script: "lint"
+npm error
+npm error Did you mean this?
+
+$ npm audit
+Tinypool: Prototype Pollution gadget in worker options leads to Remote Code Execution - https://github.com/advisories/GHSA-5gmw-xhrv-c9v3
+Tinypool: Prototype Pollution Gadget to RCE in run() options - https://github.com/advisories/GHSA-85c8-ppgw-ccpr
+fix available via `npm audit fix --force`
+Will install vitest@5.1.1, which is a breaking change
+node_modules/tinypool
+
+
+
+6 vulnerabilities (3 moderate, 1 high, 2 critical)
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force

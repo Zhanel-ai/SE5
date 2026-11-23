@@ -1,0 +1,7 @@
+[
+  { "name": "Groceries", "category": "food", "amount": 120.5 },
+  { "name": "Bus pass", "category": "transport", "amount": 45 },
+  { "name": "Cinema", "category": "fun", "amount": 25.9 },
+  { "name": "Lunch", "category": "food", "amount": 18.75 },
+  { "name": "Notebook", "category": "office", "amount": 12.4 }
+]

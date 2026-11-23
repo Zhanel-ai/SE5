@@ -1,0 +1,34 @@
+RAW OUTPUT OF THE AI ASSISTANT (read-only subagent) – proposed diff for mitigation M1 (risk R1). Unedited; the assistant did not run tests.
+The human reviewer accepted the diff unchanged (see report Section 8).
+
+(1) Diff for src/expense.js only. I did not apply it, and I did not run any tests.
+
+--- a/src/expense.js
++++ b/src/expense.js
+@@ -35,6 +35,9 @@
+ export function splitEvenly(amount, people) {
+-  const share = Math.round((amount / people) * 100) / 100
+-  const shares = []
+-  for (let i = 0; i < people; i++) shares.push(share)
+-  return shares
++  if (!Number.isInteger(people) || people < 1) throw new RangeError('people must be a positive integer')
++  const cents = Math.round(amount * 100)
++  const base = Math.floor(cents / people)
++  const extra = cents - base * people
++  const shares = []
++  for (let i = 0; i < people; i++) shares.push((base + (i < extra ? 1 : 0)) / 100)
++  return shares
+ }
+
+(2) Why it is correct: the total is converted once to integer cents. Each person gets floor(cents / people), and the leftover `extra` cents (0 <= extra < people) go one each to the first `extra` people. So the shares sum to exactly the total in cents and differ by at most one cent. `Number.isInteger` rejects 0 (via `< 1`), -2, NaN, 2.5, '3' and undefined with a RangeError. It builds a new array and never touches its inputs, so AC4 holds, and splitEvenly(10, 2) still gives [5, 5].
+
+By hand, 10/3 gives [3.34, 3.33, 3.33], and 0.01/3 gives [0.01, 0, 0], which sorts to [0, 0, 0.01] under the test's default `.sort()`. 222.55/3 gives 22255 cents as 7419, 7418, 7418, which sums to 22255. I did not run these.
+
+(3) Risks and assumptions:
+- The remainder is computed as `cents - base * people` rather than `cents % people`. This keeps it non-negative with `floor`, so negative amounts such as refunds still sum exactly. No test covers negative amounts.
+- A non-finite or non-numeric `amount` (NaN, a string) is not validated and yields NaN shares. R1 and the tests only require validating the people count, so I left it out to keep the change minimal.
+- The extra cent always goes to the earliest person, so shares are not in descending order for negative amounts. The tests do not check order.
+- `Math.round(amount * 100)` can misround on floating-point half-cent inputs such as 1.005. That is the same assumption the existing `total()` makes.
+- Very large `people` counts, such as 1e9, would build a huge array. Both the old and new code behave this way.
+- `src/cli.js` passes `people` through. If it parses argv into a string or NaN, the CLI now throws a RangeError and exits non-zero where it used to print something. I did not read `src/cli.js`, and AC5 runs `node src/cli.js data/sample.json`. The default people value should be checked to confirm it is an integer number. Nothing in `src/cli.js` was changed.
+- AGENTS.md says every behaviour change needs a regression test. Those tests already exist in tests/split.test.js.

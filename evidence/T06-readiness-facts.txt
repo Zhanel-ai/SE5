@@ -1,0 +1,39 @@
+### Readiness facts at commit 869c44b (2026-11-22)
+
+$ npm audit --json (summary)
+  @vitest/mocker moderate transitive fix: vitest@5.1.1
+  esbuild moderate transitive fix: vitest@5.1.1
+  tinypool critical transitive fix: vitest@5.1.1
+  vite high transitive fix: vitest@5.1.1
+  vite-node moderate transitive fix: vitest@5.1.1
+  vitest critical direct fix: vitest@5.1.1
+{'info': 0, 'low': 0, 'moderate': 3, 'high': 1, 'critical': 2, 'total': 6}
+
+$ npm ls --depth=0
+expense-calc@1.0.0 <repo>
+`-- vitest@2.1.9
+
+
+$ ls readiness files
+present: README.md
+present: AGENTS.md
+present: .gitignore
+present: package-lock.json
+MISSING: .env.example
+MISSING: .github
+MISSING: eslint.config.js
+MISSING: .prettierrc
+MISSING: tsconfig.json
+
+$ grep env in .gitignore
+0
+
+$ grep for secrets/dangerous APIs in src data tests
+tests/acceptance.test.js:5:import { spawnSync } from 'node:child_process'
+(done)
+
+$ engines / node version pinned?
+0
+
+$ logging in code?
+3

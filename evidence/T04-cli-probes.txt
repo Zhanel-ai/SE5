@@ -1,0 +1,30 @@
+### CLI probes on commit 869c44b (paths shortened to <repo>)
+
+$ node src/cli.js evidence/in-object.json
+<repo>/src/expense.js:10
+  for (const e of list) sum += e.amount
+                  ^
+TypeError: list is not iterable
+exit=1
+
+$ node src/cli.js evidence/in-badamount.json
+Total: NaN
+<repo>/src/cli.js:13
+  console.log(c + ': ' + cats[c].toFixed(2) + ' (limit ' + budgetLimit(c) + ', ' + budgetStatus(c, cats[c]) + ')')
+                                 ^
+TypeError: cats[c].toFixed is not a function
+exit=1
+
+$ node src/cli.js evidence/in-notjson.json
+<anonymous_script>:1
+not json
+ ^
+SyntaxError: Unexpected token 'o', "not json" is not valid JSON
+exit=1
+
+$ node src/cli.js data/sample.json abc
+Split between NaN: 
+exit=0
+$ node src/cli.js data/sample.json 0
+Split between 0: 
+exit=0

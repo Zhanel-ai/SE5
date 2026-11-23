@@ -1,0 +1,51 @@
+### Probes on BASELINE c897a09 vs FINAL 1a6b942
+
+======== base ========
+  P1 split 222.55 between 3 (shares)                         => [74.18,74.18,74.18]
+  P1 sum of the 3 shares vs total 222.55                     => 222.54
+  P1 split 10 between 3, sum of shares                       => 9.99
+  P2 total with amount "abc"                                 => null
+  P2 total with amount "5" (string)                          => 51
+  P2 total with negative amount -50 and 20                   => -30
+  P2 total with amount NaN/missing                           => null
+  P3 categoryTotals category "constructor"                   => {"constructor":"function Object() { [native code] }5"}
+  P3 categoryTotals category "__proto__"                     => []
+  P3 categoryTotals category "toString" twice                => {"toString":"function toString() { [native code] }57"}
+  P4 splitEvenly(10, 0)                                      => []
+  P4 splitEvenly(10, -2)                                     => []
+  P4 splitEvenly(10, 2.5) length                             => 3
+  P4 splitEvenly(10, NaN)                                    => []
+  P5 addExpense mutates its input list                       => 1
+  P6 total of a non-array JSON object                        => THROWS TypeError: list is not iterable
+  P7 AC2 float: sum of category totals vs total (0.1+0.2, 0.7+0.1) => {"total":1.1,"rawCategorySums":[0.30000000000000004,0.7999999999999999]}
+  P8 budgetStatus with NaN spent                             => "ok"
+  R2 raw food sum of 100.1+100.1+99.8                                    => 300
+  R2 status for that raw sum (limit 300)                                 => ok
+  R2 printed per-category (toFixed2) sum vs total, 3 x 0.005             => 0.01+0.01+0.01 vs total 0.02
+  R10 Math.round(1.005*100)/100 (what total(1.005) gives)                => 1
+  R2 total of 1.15 + 1.15 + 1.15 in cents-free floats                    => 3.45
+
+======== final ========
+  P1 split 222.55 between 3 (shares)                         => [74.19,74.18,74.18]
+  P1 sum of the 3 shares vs total 222.55                     => 222.55
+  P1 split 10 between 3, sum of shares                       => 10
+  P2 total with amount "abc"                                 => null
+  P2 total with amount "5" (string)                          => 51
+  P2 total with negative amount -50 and 20                   => -30
+  P2 total with amount NaN/missing                           => null
+  P3 categoryTotals category "constructor"                   => {"constructor":"function Object() { [native code] }5"}
+  P3 categoryTotals category "__proto__"                     => []
+  P3 categoryTotals category "toString" twice                => {"toString":"function toString() { [native code] }57"}
+  P4 splitEvenly(10, 0)                                      => THROWS RangeError: people must be a positive integer
+  P4 splitEvenly(10, -2)                                     => THROWS RangeError: people must be a positive integer
+  P4 splitEvenly(10, 2.5) length                             => THROWS RangeError: people must be a positive integer
+  P4 splitEvenly(10, NaN)                                    => THROWS RangeError: people must be a positive integer
+  P5 addExpense mutates its input list                       => 1
+  P6 total of a non-array JSON object                        => THROWS TypeError: list is not iterable
+  P7 AC2 float: sum of category totals vs total (0.1+0.2, 0.7+0.1) => {"total":1.1,"rawCategorySums":[0.30000000000000004,0.7999999999999999]}
+  P8 budgetStatus with NaN spent                             => "ok"
+  R2 raw food sum of 100.1+100.1+99.8                                    => 300
+  R2 status for that raw sum (limit 300)                                 => ok
+  R2 printed per-category (toFixed2) sum vs total, 3 x 0.005             => 0.01+0.01+0.01 vs total 0.02
+  R10 Math.round(1.005*100)/100 (what total(1.005) gives)                => 1
+  R2 total of 1.15 + 1.15 + 1.15 in cents-free floats                    => 3.45

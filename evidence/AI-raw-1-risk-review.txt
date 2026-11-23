@@ -1,0 +1,68 @@
+RAW OUTPUT OF THE AI ASSISTANT (read-only subagent, Claude Code "Explore" agent) – Task #04 risk review.
+It was run on commit 869c44b. Unedited. The assistant states it did NOT run any command; every consequence below is unverified until checked (see report Section 4).
+
+PROMPT (summary): act as a cautious reviewer; inspect the repo WITHOUT modifying files; rules from AGENTS.md were pasted into the prompt because the tool does not load AGENTS.md automatically; propose 8-10 candidate risks in correctness, maintainability, security, dependency, agent operations; for each: ID, category, file/function, cause->event->consequence, how to verify, uncertainty; do not invent test results.
+
+REVIEW OF expense-calc (read-only). Files I read: AGENTS.md, README.md, package.json, .gitignore, src/cli.js, src/expense.js, tests/*.js, data/sample.json, git log --stat, git status --short (clean output). I did NOT run npm test, npm start, the CLI, or any node snippets, and did NOT check package-lock integrity or npm audit (no network). All "consequences" below are derived from reading code only, not from observed execution. Everything is unverified until a human runs the listed check.
+
+R1 | correctness | Confidence: medium-high
+Where: src/expense.js, splitEvenly (and src/cli.js line 5 and 15, which call it).
+Cause -> event -> consequence: each share is rounded independently and no remainder is distributed. Example: splitEvenly(10, 3) gives [3.33, 3.33, 3.33], which sums to 9.99, so one cent is lost. There is also no guard for people = 0, negative, NaN or non-integer. With 0, amount/0 gives Infinity or NaN and the loop produces [] so the CLI prints "Split between 0: " with exit 0. With a non-number argument such as "abc", Number('abc') is NaN, the loop never runs, and the output is an empty split. A negative value likewise gives []. With 2.5 people it produces 3 shares.
+Verify: node src/cli.js data/sample.json 3 (sum of shares vs 222.55); node src/cli.js data/sample.json 0; node src/cli.js data/sample.json abc.
+Uncertainty: AGENTS.md has no acceptance criterion about the split's sum, so it may be intended prototype behavior.
+
+R2 | correctness | Confidence: medium-high
+Where: src/expense.js, categoryTotals and total; AC2 (categoryTotals adds up to total).
+Cause -> event -> consequence: categoryTotals returns unrounded floats while total rounds. The CLI prints cats[c].toFixed(2) per category, so printed per-category lines can differ by a cent from the printed Total when many amounts are involved (rounding of each category separately). AC2 is only tested after re-rounding the sum, with two small cases, so the tests cannot catch a displayed mismatch. Also budgetStatus is called with the unrounded value, so a spent value like 300.0000000001 caused by float drift shows 'over' while the printed value is 300.00 (displays "300.00 ... over").
+Verify: node -e that calls categoryTotals on e.g. three categories each with 0.005-type amounts or [0.1,0.2,...] and compares the sum of toFixed(2) values to total(); or craft food amounts 100.1+100.1+99.8 and check status.
+Uncertainty: the exact failing input is not computed by me; the float-drift 'over' edge case is plausible but unconfirmed.
+
+R3 | correctness / robustness | Confidence: high that the gaps exist, medium on impact
+Where: src/expense.js total, categoryTotals; src/cli.js line 7 (JSON.parse input).
+Cause -> event -> consequence: no validation of input shape. If amount is a string ("12.5"), total does string concatenation ("012.5...") then Math.round gives NaN, printed as "Total: NaN" with exit 0. A missing category becomes the key "undefined". Negative amounts (refunds) are accepted silently. A non-array JSON (object) throws "list is not iterable" with a raw stack trace. NaN or Infinity cannot occur from JSON, but null amounts give 0 with no warning.
+Verify: create a fictional JSON file outside the repo (e.g. in a scratch dir) with a string amount and run node src/cli.js <that file>.
+Uncertainty: depends on whether user-supplied files are in scope; AC5 only covers the sample file.
+
+R4 | correctness / maintainability | Confidence: high
+Where: src/cli.js, top level (no function, no error handling).
+Cause -> event -> consequence: missing argv[2] makes readFileSync(undefined) throw an uncaught ERR_INVALID_ARG_TYPE; a missing file or bad JSON gives an uncaught exception, stack trace and exit code 1. There are no usage text and no friendly message. Related: the CLI is not importable or testable as a function since it runs at module load; AC5 is tested only via spawnSync.
+Verify: node src/cli.js ; node src/cli.js missing.json (exit code via echo $?).
+Uncertainty: low, it is read directly from the code; severity is low for a prototype.
+
+R5 | correctness (spec/doc drift) | Confidence: medium
+Where: src/expense.js addExpense (mutates list via push and returns the same list); AGENTS.md AC4 and the Coding conventions ("no side effects in src/expense.js").
+Cause -> event -> consequence: addExpense is in the "pure business logic" module but mutates its input. AC4 lists only total, categoryTotals, budgetStatus, splitEvenly, so addExpense is formally outside AC4, but it contradicts the stated convention. A future caller that shares the list may get surprising aliasing. addExpense also has no test and no validation.
+Verify: grep -rn addExpense src tests (I saw no tests and no callers, but did not run the grep); read AGENTS.md lines on conventions.
+Uncertainty: it may be intentionally left as a seeded "legacy" function; a reviewer should decide whether to change it.
+
+R6 | maintainability | Confidence: medium
+Where: tests/acceptance.test.js vs tests/expense.test.js; src/expense.js BUDGET_LIMITS and DEFAULT_LIMIT.
+Cause -> event -> consequence: duplicated tests (total, budgetStatus at 300) in two files; limits are hard-coded numbers in tests and in the code, and also in AGENTS.md. Changing a limit requires edits in three places and the docs can silently drift. The sample category totals in expense.test.js use toEqual with exact floats (139.25, 25.9), which is brittle to float representation. AC5 test uses cwd-relative paths ('src/cli.js', 'data/sample.json'), so it fails if vitest is run from another directory; it also hard-asserts output text formatting. No coverage of the people argument, empty file, or error exits.
+Verify: grep for "300" across repo; run npm test from a different cwd (not run by me).
+Uncertainty: low severity; the AC5 cwd issue is only likely, not confirmed.
+
+R7 | security | Confidence: low
+Where: src/cli.js line 7 (readFileSync(process.argv[2])); category used as object key in src/expense.js categoryTotals (line 17-18).
+Cause -> event -> consequence: (a) the CLI reads any path supplied, which is normal for a local CLI but means output could leak parts of a non-expense file via the JSON parse error message (the error text echoes snippets of file content) if run by an agent on a sensitive file, which touches the AGENTS.md rule against reading secrets (no path allow-list). (b) categoryTotals uses a plain {} with user-controlled keys: a category "__proto__" makes result["__proto__"] truthy (Object.prototype), so the "if (!result[...])" init is skipped and "+=" sets a prototype-related value, which is a prototype-pollution-style quirk: the category total is silently dropped from Object.keys and AC2 would break (sum of values lacks it). budgetLimit was fixed with Object.hasOwn (commit 869c44b, test covers it) but categoryTotals was not hardened, and the tests only cover budgetStatus for such names, not categoryTotals. Likely only affects the local object, not global Object.prototype (assignment of a number to __proto__ is ignored), so this is a correctness hole more than a real pollution.
+Verify: node -e with categoryTotals([{category:'__proto__',amount:5},{category:'food',amount:1}]) vs total; also 'constructor' (result['constructor'] is a function, truthy, then += gives a string concatenation "function Object()...5" printed via toFixed which throws TypeError).
+Uncertainty: the 'constructor' crash is my reasoning, not executed. Rated low security impact as data is fictional/local.
+
+R8 | dependency | Confidence: medium
+Where: package.json devDependencies "vitest": "^2.1.9"; package-lock.json (1436 lines, 37 top-level entries in node_modules incl. @esbuild, @rollup).
+Cause -> event -> consequence: caret range permits any 2.x on a fresh install without lock (npm install does honor the lock, but npm update or a lock regeneration would not be reviewed). Vitest 2.x depends on vite/esbuild, which have had published advisories (esbuild dev server issue, vite file-serving issues) in past versions; I can't state which version is locked or whether any advisory applies, as I did not read the lock details or run npm audit (no network). No engines field in package.json even though AGENTS.md says Node 18+ (and expense.js uses Object.hasOwn, which needs Node 16.9+; vitest 2 needs Node 18+). No lint, type check or CI config exists.
+Verify: grep '"version"' for node_modules/vitest, vite, esbuild entries in package-lock.json; a human with network can run npm audit (not allowed for the agent without approval); node --version.
+Uncertainty: high; the advisory concern is speculative and may be irrelevant to a test-only devDependency.
+
+R9 | agent operations | Confidence: medium
+Where: AGENTS.md "Safe commands" and "Forbidden actions"; .git state.
+Cause -> event -> consequence: (a) "git add"/"git commit" are allowed on a task branch, but the repo's only branch is main (refs/heads/main), and nothing enforces "do not push/merge to main" (no branch protection or hook other than the default .sample hooks, none active). An agent that commits while on main would violate the rule without a technical barrier. (b) "Forbidden: any network call other than the npm registry" conflicts mildly with "No unreviewed dependency changes"; npm install is listed as setup, which can modify package-lock.json. (c) "Report the test output" has no mechanism to verify the claim; there is no CI, so "never claim a test passed unless executed" relies on honesty. (d) AGENTS.md says "No build step, no linter yet", so conventions (2-space, no semicolons, ES modules) are unenforced. (e) .gitignore contains only node_modules: no .env, no *.log, no coverage/; an accidental secret file would not be ignored, although the forbidden list says none should exist. (f) Rule says tests must not be deleted, but nothing checks the test count.
+Verify: git branch --show-current ; ls .git/hooks (only .sample files seen in listing); cat .gitignore.
+Uncertainty: medium; these are process gaps, not bugs.
+
+R10 | agent operations / correctness (weak, speculative) | Confidence: low
+Where: AGENTS.md AC1/AC2/AC3/AC4 vs tests/acceptance.test.js (AC4 test).
+Cause -> event -> consequence: the AC4 test calls budgetStatus('food', 10) and splitEvenly(10, 2) on primitives, not on the frozen data, so the freeze check proves nothing for those two functions; and "frozen toEqual(sample)" would pass even if a function mutated a copy. In non-strict mode, writes to frozen objects silently fail (ES modules are strict, so they would throw, which does give some coverage for total and categoryTotals). Also AC1 tests do not cover rounding edge cases like 1.005 (Math.round(sum*100)/100 gives 1 rather than 1.01 due to float representation), and no test for negative amounts. A "green" test run might therefore overstate AC coverage in an agent's report.
+Verify: read the test file lines 53-58; node -e "console.log(Math.round(1.005*100)/100)" (I have not run this).
+Uncertainty: low-medium; whether 1.005 is considered a defect depends on requirements (money is better handled in integer cents).
+
+Suggested priority for a human: R3/R4 and R7(b) (cheap to confirm via CLI inputs), then R1, R2, then R9. R6, R8, R10 are low priority or speculative.

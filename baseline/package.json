@@ -1,0 +1,14 @@
+{
+  "name": "expense-calc",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Small command-line expense calculator (fictional data only).",
+  "scripts": {
+    "start": "node src/cli.js data/sample.json",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.9"
+  }
+}

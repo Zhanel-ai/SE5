@@ -1,0 +1,13 @@
+### M1 BEFORE the fix (commit 869c44b): new regression tests vs current code
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 9 ⎯⎯⎯⎯⎯⎯⎯
+ FAIL  tests/split.test.js > splitEvenly keeps every cent > 10 between 3 people sums to exactly 10.00 and shares differ by at most 0.01
+ FAIL  tests/split.test.js > splitEvenly keeps every cent > 222.55 between 3 people sums to exactly 222.55
+ FAIL  tests/split.test.js > splitEvenly keeps every cent > 0.01 between 3 people gives one cent to one person
+ FAIL  tests/split.test.js > splitEvenly rejects invalid people counts > throws RangeError for 0
+ FAIL  tests/split.test.js > splitEvenly rejects invalid people counts > throws RangeError for -2
+ FAIL  tests/split.test.js > splitEvenly rejects invalid people counts > throws RangeError for NaN
+ FAIL  tests/split.test.js > splitEvenly rejects invalid people counts > throws RangeError for 2.5
+ FAIL  tests/split.test.js > splitEvenly rejects invalid people counts > throws RangeError for 3
+ FAIL  tests/split.test.js > splitEvenly rejects invalid people counts > throws RangeError for undefined
+ Test Files  1 failed | 2 passed (3)
+      Tests  9 failed | 19 passed (28)

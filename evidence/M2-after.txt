@@ -1,0 +1,36 @@
+### M2 AFTER the fix (working tree on top of 883006f)
+ ✓ tests/split.test.js (10 tests) 5ms
+ ✓ tests/expense.test.js (6 tests) 4ms
+ ✓ tests/acceptance.test.js (12 tests) 69ms
+ ✓ tests/validation.test.js (20 tests) 453ms
+ Test Files  4 passed (4)
+      Tests  48 passed (48)
+
+[success output byte-identical to the previous cli for 1 and 3 people?]
+people=1 identical
+people=3 identical
+
+$ node src/cli.js
+Usage: node src/cli.js <expenses.json> [people]
+exit=2
+$ node src/cli.js evidence_missing.json
+Error: ENOENT: no such file or directory, open '<repo>\evidence_missing.json'
+exit=2
+$ node src/cli.js ../evidence/in-object.json
+Error: expenses must be a list
+exit=2
+$ node src/cli.js ../evidence/in-badamount.json
+Error: item 1: amount must be a finite number >= 0
+exit=2
+$ node src/cli.js ../evidence/in-notjson.json
+Error: Unexpected token 'o', "not json" is not valid JSON
+exit=2
+$ node src/cli.js data/sample.json abc
+Error: people must be a positive integer
+exit=2
+$ node src/cli.js data/sample.json 0
+Error: people must be a positive integer
+exit=2
+ M src/cli.js
+ M src/expense.js
+?? tests/validation.test.js
